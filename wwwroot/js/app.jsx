@@ -1,0 +1,169 @@
+const { useEffect, useState } = React;
+
+function App() {
+    const [tasks, setTasks] = useState([]);
+    const [title, setTitle] = useState("");
+    const [priority, setPriority] = useState("Normal");
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
+    const [editingTask, setEditingTask] = useState(null);
+    const [error, setError] = useState("");
+
+    useEffect(() => {
+        loadTasks();
+    }, []);
+
+    async function loadTasks() {
+        setIsLoading(true);
+        setError("");
+
+        try {
+            const data = await window.taskApi.getTasks();
+            setTasks(data);
+        } catch (err) {
+            setError(err.message || "Unable to load tasks.");
+        } finally {
+            setIsLoading(false);
+        }
+    }
+
+    async function handleAddTask(event) {
+        event.preventDefault();
+
+        // TODO:
+        // - validate the form if desired
+        // - call window.taskApi.addTask({ title, priority })
+        // - update local state so the new task appears without refreshing
+        // - disable the button while saving
+        // - handle API errors
+    }
+
+    async function handleSaveEdit(event) {
+        event.preventDefault();
+
+        // TODO:
+        // - validate the edit form if desired
+        // - call window.taskApi.updateTask(editingTask.id, { title, priority })
+        // - update the matching task in local state
+        // - close the edit UI when save succeeds
+        // - handle API errors
+    }
+
+    return (
+        <div className="app-shell">
+            <div className="page-card">
+                <h1 className="page-title">K5 Assessment Starter</h1>
+                <p className="page-subtitle">
+                    React frontend with an ASP.NET Core API. The add and edit UI is already in place,
+                    but the behavior is intentionally unfinished.
+                </p>
+
+                {error && <div className="message error">{error}</div>}
+                {isLoading && <div className="message info">Loading tasks...</div>}
+
+                <form className="form-grid" onSubmit={handleAddTask}>
+                    <input
+                        className="input"
+                        placeholder="Add a task title"
+                        value={title}
+                        onChange={event => setTitle(event.target.value)}
+                    />
+
+                    <select
+                        className="select"
+                        value={priority}
+                        onChange={event => setPriority(event.target.value)}
+                    >
+                        <option value="Low">Low</option>
+                        <option value="Normal">Normal</option>
+                        <option value="High">High</option>
+                    </select>
+
+                    <button className="primary-button" type="submit" disabled={isSaving}>
+                        {isSaving ? "Saving..." : "Add Task"}
+                    </button>
+                </form>
+
+                <div className="task-list">
+                    {!isLoading && tasks.length === 0 && (
+                        <div className="empty-state">No tasks to display.</div>
+                    )}
+
+                    {tasks.map(task => (
+                        <TaskRow
+                            key={task.id}
+                            task={task}
+                            onEdit={() => setEditingTask({ ...task })}
+                        />
+                    ))}
+                </div>
+
+                {editingTask && (
+                    <form className="page-card" style={{ marginTop: 20, padding: 18 }} onSubmit={handleSaveEdit}>
+                        <h3 style={{ marginTop: 0 }}>Edit Task</h3>
+
+                        <div className="form-grid" style={{ marginBottom: 12 }}>
+                            <input
+                                className="input"
+                                value={editingTask.title}
+                                onChange={event => setEditingTask(current => ({ ...current, title: event.target.value }))}
+                            />
+
+                            <select
+                                className="select"
+                                value={editingTask.priority}
+                                onChange={event => setEditingTask(current => ({ ...current, priority: event.target.value }))}
+                            >
+                                <option value="Low">Low</option>
+                                <option value="Normal">Normal</option>
+                                <option value="High">High</option>
+                            </select>
+                        </div>
+
+                        <div className="actions">
+                            <button className="primary-button" type="submit" disabled={isSaving}>
+                                {isSaving ? "Saving..." : "Save Changes"}
+                            </button>
+
+                            <button className="secondary-button" type="button" onClick={() => setEditingTask(null)}>
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                )}
+
+                <div className="help-note">
+                    Goals: wire up add/edit, validation, and polish.
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function TaskRow({ task, onEdit }) {
+    const badgeClass = `badge ${task.priority.toLowerCase()}`;
+
+    return (
+        <div className="task-card">
+            <div>
+                <div className={`task-title ${task.isComplete ? "complete" : ""}`}>
+                    {task.title}
+                </div>
+
+                <div className="task-meta">
+                    <span className={badgeClass}>{task.priority}</span>
+                    {" · "}
+                    {task.isComplete ? "Completed" : "Active"}
+                </div>
+            </div>
+
+            <div className="actions">
+                <button className="small-button" type="button" onClick={onEdit}>
+                    Edit
+                </button>
+            </div>
+        </div>
+    );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
